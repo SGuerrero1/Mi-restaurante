@@ -120,6 +120,7 @@ function scrollArray(elem, left, top, delay) {
         lastScroll = +new Date;
     }          
     
+    // push a scroll command
     que.push({
         x: left, 
         y: top, 
@@ -128,6 +129,7 @@ function scrollArray(elem, left, top, delay) {
         start: +new Date
     });
         
+    // don't act if there's a pending queue
     if (pending) {
         return;
     }  
@@ -146,25 +148,33 @@ function scrollArray(elem, left, top, delay) {
             var elapsed  = now - item.start;
             var finished = (elapsed >= options.animationTime);
             
+            // scroll position: [0, 1]
             var position = (finished) ? 1 : elapsed / options.animationTime;
             
+            // easing [optional]
             if (options.pulseAlgorithm) {
                 position = pulse(position);
             }
             
+            // only need the difference
             var x = (item.x * position - item.lastX) >> 0;
             var y = (item.y * position - item.lastY) >> 0;
             
+            // add this to the total scrolling
             scrollX += x;
             scrollY += y;            
             
+            // update last values
             item.lastX += x;
             item.lastY += y;
         
+            // delete and step back if it's over
             if (finished) {
                 que.splice(i, 1); i--;
             }           
         }
+
+        // scroll left and top
         if (scrollWindow) {
             window.scrollBy(scrollX, scrollY);
         } 
@@ -172,7 +182,8 @@ function scrollArray(elem, left, top, delay) {
             if (scrollX) elem.scrollLeft += scrollX;
             if (scrollY) elem.scrollTop  += scrollY;                    
         }
-
+        
+        // clean up if there's nothing left to do
         if (!left && !top) {
             que = [];
         }
@@ -184,11 +195,20 @@ function scrollArray(elem, left, top, delay) {
         }
     };
     
+    // start a new queue of actions
     requestFrame(step, elem, 0);
     pending = true;
 }
 
 
+/***********************************************
+ * EVENTS
+ ***********************************************/
+
+/**
+ * Mouse wheel handler.
+ * @param {Object} event
+ */
 function wheel(event) {
 
     if (!initDone) {
@@ -197,7 +217,9 @@ function wheel(event) {
     
     var target = event.target;
     var overflowing = overflowingAncestor(target);
-     
+    
+    // use default if there's no overflowing
+    // element or default action is prevented    
     if (!overflowing || event.defaultPrevented ||
         isNodeName(activeElement, "embed") ||
        (isNodeName(target, "embed") && /\.pdf/i.test(target.src))) {
@@ -206,15 +228,20 @@ function wheel(event) {
 
     var deltaX = event.wheelDeltaX || 0;
     var deltaY = event.wheelDeltaY || 0;
-
+    
+    // use wheelDelta if deltaX/Y is not available
     if (!deltaX && !deltaY) {
         deltaY = event.wheelDelta || 0;
     }
 
+    // check if it's a touchpad scroll that should be ignored
     if (!options.touchpadSupport && isTouchpad(deltaY)) {
         return true;
     }
 
+    // scale by step size
+    // delta is 120 most of the time
+    // synaptics seems to send 1 sometimes
     if (Math.abs(deltaX) > 1.2) {
         deltaX *= options.stepSize / 120;
     }
@@ -226,18 +253,26 @@ function wheel(event) {
     event.preventDefault();
 }
 
+/**
+ * Keydown event handler.
+ * @param {Object} event
+ */
 function keydown(event) {
 
     var target   = event.target;
     var modifier = event.ctrlKey || event.altKey || event.metaKey || 
                   (event.shiftKey && event.keyCode !== key.spacebar);
-
+    
+    // do nothing if user is editing text
+    // or using a modifier key (except shift)
+    // or in a dropdown
     if ( /input|textarea|select|embed/i.test(target.nodeName) ||
          target.isContentEditable || 
          event.defaultPrevented   ||
          modifier ) {
       return true;
     }
+    // spacebar should trigger button press
     if (isNodeName(target, "button") &&
         event.keyCode === key.spacebar) {
       return true;
@@ -258,7 +293,7 @@ function keydown(event) {
         case key.down:
             y = options.arrowScroll;
             break;         
-        case key.spacebar: 
+        case key.spacebar: // (+ shift)
             shift = event.shiftKey ? 1 : -1;
             y = -shift * clientHeight * 0.9;
             break;
@@ -282,19 +317,26 @@ function keydown(event) {
             x = options.arrowScroll;
             break;            
         default:
-            return true; 
+            return true; // a key we don't care about
     }
 
     scrollArray(elem, x, y);
     event.preventDefault();
 }
 
+/**
+ * Mousedown event only for updating activeElement
+ */
 function mousedown(event) {
     activeElement = event.target;
 }
 
+
+/***********************************************
+ * OVERFLOW
+ ***********************************************/
  
-var cache = {}; 
+var cache = {}; // cleared out every once in while
 setInterval(function () { cache = {}; }, 10 * 1000);
 
 var uniqueID = (function () {
@@ -321,7 +363,7 @@ function overflowingAncestor(el) {
         elems.push(el);
         if (rootScrollHeight === el.scrollHeight) {
             if (!isFrame || root.clientHeight + 10 < rootScrollHeight) {
-                return setCache(elems, document.body);
+                return setCache(elems, document.body); // scrolling root in WebKit
             }
         } else if (el.clientHeight + 10 < el.scrollHeight) {
             overflow = getComputedStyle(el, "").getPropertyValue("overflow-y");
@@ -332,6 +374,10 @@ function overflowingAncestor(el) {
     } while (el = el.parentNode);
 }
 
+
+/***********************************************
+ * HELPERS
+ ***********************************************/
 
 function addEvent(type, fn, bubble) {
     window.addEventListener(type, fn, (bubble||false));
@@ -386,13 +432,26 @@ var requestFrame = (function () {
 })();
 
 
+/***********************************************
+ * PULSE
+ ***********************************************/
+ 
+/**
+ * Viscous fluid with a pulse for part and decay for the rest.
+ * - Applies a fixed force over an interval (a damped acceleration), and
+ * - Lets the exponential bleed away the velocity over a longer interval
+ * - Michael Herf, http://stereopsis.com/stopping/
+ */
 function pulse_(x) {
     var val, start, expx;
+    // test
     x = x * options.pulseScale;
-    if (x < 1) { 
+    if (x < 1) { // acceleartion
         val = x - (1 - Math.exp(-x));
-    } else {
+    } else {     // tail
+        // the previous animation ended here:
         start = Math.exp(-1);
+        // simple viscous drag
         x -= 1;
         expx = 1 - Math.exp(-x);
         val = start + (expx * (1 - start));

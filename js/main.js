@@ -40,6 +40,7 @@ function main() {
     }
   });
 	
+  	// Portfolio isotope filter
     $(window).load(function() {
         var $container = $('.portfolio-items');
         $container.isotope({
@@ -67,6 +68,7 @@ function main() {
 
     });
 	
+    // Nivo Lightbox 
     $('.portfolio-item a').nivoLightbox({
             effect: 'slideDown',  
             keyboardNav: true,                            
