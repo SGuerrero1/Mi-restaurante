@@ -314,12 +314,9 @@
 
     _getAtoms : function( $elems ) {
       var selector = this.options.itemSelector,
-          // filter & find
           $atoms = selector ? $elems.filter( selector ).add( $elems.find( selector ) ) : $elems,
-          // base style for atoms
           atomStyle = { position: 'absolute' };
 
-      // filter out text nodes
       $atoms = $atoms.filter( function( i, atom ) {
         return atom.nodeType === 1;
       });
@@ -349,7 +346,6 @@
       if ( $.isPlainObject( opts ) ){
         this.options = $.extend( true, this.options, opts );
 
-        // trigger _updateOptionName if it exists
         var updateOptionFn;
         for ( var optionName in opts ) {
           updateOptionFn = '_update' + capitalize( optionName );
