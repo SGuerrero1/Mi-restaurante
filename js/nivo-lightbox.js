@@ -59,7 +59,6 @@
             var $this = this,
                 currentLink = this.$el;
 
-			// Check content
 			var check = this.checkContent(currentLink);
 			if(!check) return;
 
@@ -148,12 +147,12 @@
 
 					wrap.css({
 						'line-height': $('.nivo-lightbox-content').height() +'px',
-						'height': $('.nivo-lightbox-content').height() +'px' // For Firefox
+						'height': $('.nivo-lightbox-content').height() +'px'
 					});
 					$(window).resize(function() {
 						wrap.css({
 							'line-height': $('.nivo-lightbox-content').height() +'px',
-							'height': $('.nivo-lightbox-content').height() +'px' // For Firefox
+							'height': $('.nivo-lightbox-content').height() +'px'
 						});
 					});
 				}).each(function() {
