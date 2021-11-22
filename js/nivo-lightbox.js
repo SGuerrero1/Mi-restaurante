@@ -41,16 +41,12 @@
             this.$el.on('click', function(e){
                 $this.showLightbox(e);
             });
-
-            // keyboardNav
+		
             if(this.options.keyboardNav){
                 $('body').off('keyup').on('keyup', function(e){
                     var code = (e.keyCode ? e.keyCode : e.which);
-                    // Escape
                     if(code == 27) $this.destructLightbox();
-                    // Left
                     if(code == 37) $('.nivo-lightbox-prev').trigger('click');
-                    // Right
                     if(code == 39) $('.nivo-lightbox-next').trigger('click');
 				});
 			}
@@ -78,13 +74,11 @@
 
 			this.processContent( content, currentLink );
 
-            // Nav
             if(this.$el.attr('data-lightbox-gallery')){
                 var galleryItems = $('[data-lightbox-gallery="'+ this.$el.attr('data-lightbox-gallery') +'"]');
 
                 $('.nivo-lightbox-nav').show();
 
-				// Prev
                 $('.nivo-lightbox-prev').off('click').on('click', function(e){
                     e.preventDefault();
                     var index = galleryItems.index(currentLink);
@@ -94,7 +88,6 @@
                     $this.options.onPrev.call(this, [ currentLink ]);
                 });
 
-                // Next
                 $('.nivo-lightbox-next').off('click').on('click', function(e){
                     e.preventDefault();
                     var index = galleryItems.index(currentLink);
@@ -108,7 +101,7 @@
             setTimeout(function(){
                 lightbox.addClass('nivo-lightbox-open');
                 $this.options.afterShowLightbox.call(this, [ lightbox ]);
-            }, 1); // For CSS transitions
+            }, 1);
         },
 
 		checkContent: function( link ) {
@@ -119,19 +112,15 @@
             if(href.match(/\.(jpeg|jpg|gif|png)$/i) !== null){
 				return true;
 			}
-			// Video (Youtube/Vimeo)
             else if(video){
 				return true;
 			}
-			// AJAX
 			else if(link.attr('data-lightbox-type') == 'ajax'){
 				return true;
 			}
-			// Inline HTML
 			else if(href.substring(0, 1) == '#' && link.attr('data-lightbox-type') == 'inline'){
 				return true;
 			}
-			// iFrame (default)
 			else if(link.attr('data-lightbox-type') == 'iframe'){
 				return true;
 			}
@@ -146,12 +135,10 @@
 
             content.html('').addClass('nivo-lightbox-loading');
 
-            // Is HiDPI?
             if(this.isHidpi() && link.attr('data-lightbox-hidpi')){
                 href = link.attr('data-lightbox-hidpi');
             }
 
-            // Image
             if(href.match(/\.(jpeg|jpg|gif|png)$/i) !== null){
                 var img = $('<img>', { src: href });
                 img.one('load', function() {
@@ -159,7 +146,6 @@
                     wrap.append(img);
 					content.html(wrap).removeClass('nivo-lightbox-loading');
 
-					// Vertically center images
 					wrap.css({
 						'line-height': $('.nivo-lightbox-content').height() +'px',
 						'height': $('.nivo-lightbox-content').height() +'px' // For Firefox
@@ -179,7 +165,6 @@
                     content.html(wrap).removeClass('nivo-lightbox-loading');
 				});
             }
-            // Video (Youtube/Vimeo)
             else if(video){
                 var src = '',
                     classTerm = 'nivo-lightbox-video';
@@ -220,7 +205,6 @@
 						wrap.append(data);
 						content.html(wrap).removeClass('nivo-lightbox-loading');
 
-						// Vertically center html
 						if(wrap.outerHeight() < content.height()){
 							wrap.css({
 								'position': 'relative',
@@ -244,14 +228,12 @@
 					}
 				});
             }
-            // Inline HTML
             else if(href.substring(0, 1) == '#' && link.attr('data-lightbox-type') == 'inline'){
                 if($(href).length){
                     var wrap = $('<div class="nivo-lightbox-inline" />');
 					wrap.append($(href).clone().show());
                     content.html(wrap).removeClass('nivo-lightbox-loading');
 
-                    // Vertically center html
 					if(wrap.outerHeight() < content.height()){
 						wrap.css({
 							'position': 'relative',
@@ -273,7 +255,6 @@
                     content.html(wrapError).removeClass('nivo-lightbox-loading');
 				}
             }
-            // iFrame (default)
             else if(link.attr('data-lightbox-type') == 'iframe'){
                 var iframe = $('<iframe>', {
                     src: href,
@@ -288,8 +269,6 @@
             } else {
 				return false;
 			}
-
-            // Set the title
             if(link.attr('title')){
                 var titleWrap = $('<span>', { 'class': 'nivo-lightbox-title' });
                 titleWrap.text(link.attr('title'));
@@ -344,18 +323,15 @@
             $('.nivo-lightbox-nav').hide();
             $('body').removeClass('nivo-lightbox-body-effect-'+ $this.options.effect);
 
-            // For IE
             var isMSIE = /*@cc_on!@*/0;
             if(isMSIE){
                 $('.nivo-lightbox-overlay iframe').attr("src", " ");
                 $('.nivo-lightbox-overlay iframe').remove();
             }
 
-            // Remove click handlers
             $('.nivo-lightbox-prev').off('click');
             $('.nivo-lightbox-next').off('click');
 
-            // Empty content (for videos)
             $('.nivo-lightbox-content').empty();
 
             this.options.afterHideLightbox.call(this);
