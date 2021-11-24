@@ -1,32 +1,15 @@
-/**
- * Isotope v1.5.25
- * An exquisite jQuery plugin for magical layouts
- * http://isotope.metafizzy.co
- *
- * Commercial use requires one-time license fee
- * http://metafizzy.co/#licenses
- *
- * Copyright 2012 David DeSandro / Metafizzy
- */
-
-/*jshint asi: true, browser: true, curly: true, eqeqeq: true, forin: false, immed: false, newcap: true, noempty: true, strict: true, undef: true */
-/*global jQuery: false */
 
 (function( window, $, undefined ){
 
   'use strict';
 
-  // get global vars
   var document = window.document;
   var Modernizr = window.Modernizr;
 
-  // helper function
   var capitalize = function( str ) {
     return str.charAt(0).toUpperCase() + str.slice(1);
   };
 
-  // ========================= getStyleProperty by kangax ===============================
-  // http://perfectionkills.com/feature-testing-css-properties/
 
   var prefixes = 'Moz Webkit O Ms'.split(' ');
 
@@ -34,15 +17,12 @@
     var style = document.documentElement.style,
         prefixed;
 
-    // test standard property first
     if ( typeof style[propName] === 'string' ) {
       return propName;
     }
 
-    // capitalize
     propName = capitalize( propName );
 
-    // test vendor specific properties
     for ( var i=0, len = prefixes.length; i < len; i++ ) {
       prefixed = prefixes[i] + propName;
       if ( typeof style[ prefixed ] === 'string' ) {
@@ -55,26 +35,6 @@
       transitionProp = getStyleProperty('transitionProperty');
 
 
-  // ========================= miniModernizr ===============================
-  // <3<3<3 and thanks to Faruk and Paul for doing the heavy lifting
-
-  /*!
-   * Modernizr v1.6ish: miniModernizr for Isotope
-   * http://www.modernizr.com
-   *
-   * Developed by:
-   * - Faruk Ates  http://farukat.es/
-   * - Paul Irish  http://paulirish.com/
-   *
-   * Copyright (c) 2009-2010
-   * Dual-licensed under the BSD or MIT licenses.
-   * http://www.modernizr.com/license/
-   */
-
-  /*
-   * This version whittles down the script just to check support for
-   * CSS transitions, transforms, and 3D transforms.
-  */
 
   var tests = {
     csstransforms: function() {
@@ -83,7 +43,7 @@
 
     csstransforms3d: function() {
       var test = !!getStyleProperty('perspective');
-      // double check for Chrome's false positive
+  
       if ( test ) {
         var vendorCSSPrefixes = ' -o- -moz- -ms- -webkit- -khtml- '.split(' '),
             mediaQuery = '@media (' + vendorCSSPrefixes.join('transform-3d),(') + 'modernizr)',
@@ -107,15 +67,12 @@
   var testName;
 
   if ( Modernizr ) {
-    // if there's a previous Modernzir, check if there are necessary tests
     for ( testName in tests) {
       if ( !Modernizr.hasOwnProperty( testName ) ) {
-        // if test hasn't been run, use addTest to run it
         Modernizr.addTest( testName, tests[ testName ] );
       }
     }
   } else {
-    // or create new mini Modernizr that just has the 3 tests
     Modernizr = window.Modernizr = {
       _version : '1.6ish: miniModernizr for Isotope'
     };
@@ -123,32 +80,20 @@
     var classes = ' ';
     var result;
 
-    // Run through tests
     for ( testName in tests) {
       result = tests[ testName ]();
       Modernizr[ testName ] = result;
       classes += ' ' + ( result ?  '' : 'no-' ) + testName;
     }
 
-    // Add the new classes to the <html> element.
     $('html').addClass( classes );
   }
 
 
-  // ========================= isoTransform ===============================
-
-  /**
-   *  provides hooks for .css({ scale: value, translate: [x, y] })
-   *  Progressively enhanced CSS transforms
-   *  Uses hardware accelerated 3D transforms for Safari
-   *  or falls back to 2D transforms.
-   */
-
   if ( Modernizr.csstransforms ) {
 
-        // i.e. transformFnNotations.scale(0.5) >> 'scale3d( 0.5, 0.5, 1)'
     var transformFnNotations = Modernizr.csstransforms3d ?
-      { // 3D transform functions
+      { 
         translate : function ( position ) {
           return 'translate3d(' + position[0] + 'px, ' + position[1] + 'px, 0) ';
         },
@@ -156,7 +101,7 @@
           return 'scale3d(' + scale + ', ' + scale + ', 1) ';
         }
       } :
-      { // 2D transform functions
+      { 
         translate : function ( position ) {
           return 'translate(' + position[0] + 'px, ' + position[1] + 'px) ';
         },
@@ -167,16 +112,14 @@
     ;
 
     var setIsoTransform = function ( elem, name, value ) {
-          // unpack current transform data
+        
       var data =  $.data( elem, 'isoTransform' ) || {},
           newData = {},
           fnName,
           transformObj = {},
           transformValue;
 
-      // i.e. newData.scale = 0.5
       newData[ name ] = value;
-      // extend new value over current data
       $.extend( data, newData );
 
       for ( fnName in data ) {
@@ -184,31 +127,22 @@
         transformObj[ fnName ] = transformFnNotations[ fnName ]( transformValue );
       }
 
-      // get proper order
-      // ideally, we could loop through this give an array, but since we only have
-      // a couple transforms we're keeping track of, we'll do it like so
+
       var translateFn = transformObj.translate || '',
           scaleFn = transformObj.scale || '',
-          // sorting so translate always comes first
           valueFns = translateFn + scaleFn;
 
-      // set data back in elem
       $.data( elem, 'isoTransform', data );
 
-      // set name to vendor specific property
+  
       elem.style[ transformProp ] = valueFns;
     };
 
-    // ==================== scale ===================
 
     $.cssNumber.scale = true;
 
     $.cssHooks.scale = {
       set: function( elem, value ) {
-        // uncomment this bit if you want to properly parse strings
-        // if ( typeof value === 'string' ) {
-        //   value = parseFloat( value );
-        // }
         setIsoTransform( elem, 'scale', value );
       },
       get: function( elem, computed ) {
@@ -222,25 +156,12 @@
     };
 
 
-    // ==================== translate ===================
 
     $.cssNumber.translate = true;
 
     $.cssHooks.translate = {
       set: function( elem, value ) {
 
-        // uncomment this bit if you want to properly parse strings
-        // if ( typeof value === 'string' ) {
-        //   value = value.split(' ');
-        // }
-        //
-        // var i, val;
-        // for ( i = 0; i < 2; i++ ) {
-        //   val = value[i];
-        //   if ( typeof val === 'string' ) {
-        //     val = parseInt( val );
-        //   }
-        // }
 
         setIsoTransform( elem, 'translate', value );
       },
@@ -253,12 +174,11 @@
 
   }
 
-  // ========================= get transition-end event ===============================
   var transitionEndEvent, transitionDurProp;
 
   if ( Modernizr.csstransitions ) {
     transitionEndEvent = {
-      WebkitTransitionProperty: 'webkitTransitionEnd',  // webkit
+      WebkitTransitionProperty: 'webkitTransitionEnd',  
       MozTransitionProperty: 'transitionend',
       OTransitionProperty: 'oTransitionEnd otransitionend',
       transitionProperty: 'transitionend'
@@ -267,17 +187,6 @@
     transitionDurProp = getStyleProperty('transitionDuration');
   }
 
-  // ========================= smartresize ===============================
-
-  /*
-   * smartresize: debounced resize event for jQuery
-   *
-   * latest version and complete README available on Github:
-   * https://github.com/louisremi/jquery.smartresize.js
-   *
-   * Copyright 2011 @louis_remi
-   * Licensed under the MIT license.
-   */
 
   var $event = $.event,
       dispatchMethod = $.event.handle ? 'handle' : 'dispatch',
@@ -291,11 +200,10 @@
       $(this).unbind( "resize", $event.special.smartresize.handler );
     },
     handler: function( event, execAsap ) {
-      // Save the context
       var context = this,
           args = arguments;
 
-      // set correct event type
+   
       event.type = "smartresize";
 
       if ( resizeTimeout ) { clearTimeout( resizeTimeout ); }
@@ -311,10 +219,7 @@
 
 
 
-// ========================= Isotope ===============================
 
-
-  // our "Widget" object constructor
   $.Isotope = function( options, element, callback ){
     this.element = $( element );
 
@@ -322,7 +227,6 @@
     this._init( callback );
   };
 
-  // styles of container element we want to keep track of
   var isoContainerStyles = [ 'width', 'height' ];
 
   var $window = $(window);
@@ -353,7 +257,6 @@
 
   $.Isotope.prototype = {
 
-    // sets up widget
     _create : function( options ) {
 
       this.options = $.extend( {}, $.Isotope.settings, options );
@@ -361,10 +264,8 @@
       this.styleQueue = [];
       this.elemCount = 0;
 
-      // get original styles in case we re-apply them in .destroy()
       var elemStyle = this.element[0].style;
       this.originalStyle = {};
-      // keep track of container styles
       var containerStyles = isoContainerStyles.slice(0);
       for ( var prop in this.options.containerStyle ) {
         containerStyles.push( prop );
@@ -373,13 +274,13 @@
         prop = containerStyles[i];
         this.originalStyle[ prop ] = elemStyle[ prop ] || '';
       }
-      // apply container style from options
+
       this.element.css( this.options.containerStyle );
 
       this._updateAnimationEngine();
       this._updateUsingTransforms();
 
-      // sorting
+
       var originalOrderSorter = {
         'original-order' : function( $elem, instance ) {
           instance.elemCount ++;
@@ -392,29 +293,27 @@
 
       this.options.getSortData = $.extend( this.options.getSortData, originalOrderSorter );
 
-      // need to get atoms
       this.reloadItems();
 
-      // get top left position of where the bricks should be
+
       this.offset = {
         left: parseInt( ( this.element.css('padding-left') || 0 ), 10 ),
         top: parseInt( ( this.element.css('padding-top') || 0 ), 10 )
       };
 
-      // add isotope class first time around
+
       var instance = this;
       setTimeout( function() {
         instance.element.addClass( instance.options.containerClass );
       }, 0 );
 
-      // bind resize method
+
       if ( this.options.resizable ) {
         $window.bind( 'smartresize.isotope', function() {
           instance.resize();
         });
       }
 
-      // dismiss all click events from hidden events
       this.element.delegate( '.' + this.options.hiddenClass, 'click', function(){
         return false;
       });
@@ -423,12 +322,9 @@
 
     _getAtoms : function( $elems ) {
       var selector = this.options.itemSelector,
-          // filter & find
           $atoms = selector ? $elems.filter( selector ).add( $elems.find( selector ) ) : $elems,
-          // base style for atoms
           atomStyle = { position: 'absolute' };
 
-      // filter out text nodes
       $atoms = $atoms.filter( function( i, atom ) {
         return atom.nodeType === 1;
       });
@@ -445,10 +341,6 @@
       return $atoms;
     },
 
-    // _init fires when your instance is first created
-    // (from the constructor above), and when you
-    // attempt to initialize the widget again (by the bridge)
-    // after it has already been initialized.
     _init : function( callback ) {
 
       this.$filteredAtoms = this._filter( this.$allAtoms );
@@ -458,12 +350,10 @@
     },
 
     option : function( opts ){
-      // change options AFTER initialization:
-      // signature: $('#foo').bar({ cool:false });
+
       if ( $.isPlainObject( opts ) ){
         this.options = $.extend( true, this.options, opts );
 
-        // trigger _updateOptionName if it exists
         var updateOptionFn;
         for ( var optionName in opts ) {
           updateOptionFn = '_update' + capitalize( optionName );
@@ -474,13 +364,11 @@
       }
     },
 
-    // ====================== updaters ====================== //
-    // kind of like setters
 
     _updateAnimationEngine : function() {
       var animationEngine = this.options.animationEngine.toLowerCase().replace( /[ _\-]/g, '');
       var isUsingJQueryAnimation;
-      // set applyStyleFnName
+      
       switch ( animationEngine ) {
         case 'css' :
         case 'none' :
@@ -489,7 +377,7 @@
         case 'jquery' :
           isUsingJQueryAnimation = true;
           break;
-        default : // best available
+        default : 
           isUsingJQueryAnimation = !Modernizr.csstransitions;
       }
       this.isUsingJQueryAnimation = isUsingJQueryAnimation;
@@ -504,7 +392,6 @@
       var usingTransforms = this.usingTransforms = this.options.transformsEnabled &&
         Modernizr.csstransforms && Modernizr.csstransitions && !this.isUsingJQueryAnimation;
 
-      // prevent scales when transforms are disabled
       if ( !usingTransforms ) {
         delete this.options.hiddenStyle.scale;
         delete this.options.visibleStyle.scale;
@@ -514,7 +401,6 @@
     },
 
 
-    // ====================== Filtering ======================
 
     _filter : function( $atoms ) {
       var filter = this.options.filter === '' ? '*' : this.options.filter;
@@ -540,7 +426,6 @@
       return $atoms.filter( filter );
     },
 
-    // ====================== Sorting ======================
 
     updateSortData : function( $atoms, isIncrementingElemCount ) {
       var instance = this,
@@ -549,21 +434,20 @@
       $atoms.each(function(){
         $this = $(this);
         sortData = {};
-        // get value for sort data based on fn( $elem ) passed in
         for ( var key in getSortData ) {
           if ( !isIncrementingElemCount && key === 'original-order' ) {
-            // keep original order original
+
             sortData[ key ] = $.data( this, 'isotope-sort-data' )[ key ];
           } else {
             sortData[ key ] = getSortData[ key ]( $this, instance );
           }
         }
-        // apply sort data to element
+
         $.data( this, 'isotope-sort-data', sortData );
       });
     },
 
-    // used on all the filtered atoms
+
     _sort : function() {
 
       var sortBy = this.options.sortBy,
@@ -572,7 +456,6 @@
           sortFn = function( alpha, beta ) {
             var a = getSorter( alpha, sortBy ),
                 b = getSorter( beta, sortBy );
-            // fall back to original order if data matches
             if ( a === b && sortBy !== 'original-order') {
               a = getSorter( alpha, 'original-order' );
               b = getSorter( beta, 'original-order' );
@@ -587,7 +470,6 @@
       return $.data( elem, 'isotope-sort-data' )[ sortBy ];
     },
 
-    // ====================== Layout Helpers ======================
 
     _translate : function( x, y ) {
       return { translate : [ x, y ] };
@@ -608,18 +490,12 @@
     },
 
 
-    // ====================== General Layout ======================
-
-    // used on collection of atoms (should be filtered, and sorted before )
-    // accepts atoms-to-be-laid-out to start with
     layout : function( $elems, callback ) {
 
       var layoutMode = this.options.layoutMode;
 
-      // layout logic
       this[ '_' +  layoutMode + 'Layout' ]( $elems );
 
-      // set the size of the container
       if ( this.options.resizesContainer ) {
         var containerStyle = this[ '_' +  layoutMode + 'GetContainerSize' ]();
         this.styleQueue.push({ $el: this.element, style: containerStyle });
@@ -631,8 +507,7 @@
     },
 
     _processStyleQueue : function( $elems, callback ) {
-      // are we animating the layout arrangement?
-      // use plugin-ish syntax for css or animate
+
       var styleFn = !this.isLaidOut ? 'css' : (
             this.isUsingJQueryAnimation ? 'animate' : 'css'
           ),
@@ -640,28 +515,26 @@
           onLayout = this.options.onLayout,
           objStyleFn, processor,
           triggerCallbackNow, callbackFn;
-
-      // default styleQueue processor, may be overwritten down below
+      
       processor = function( i, obj ) {
         obj.$el[ styleFn ]( obj.style, animOpts );
       };
 
       if ( this._isInserting && this.isUsingJQueryAnimation ) {
-        // if using styleQueue to insert items
+        
         processor = function( i, obj ) {
-          // only animate if it not being inserted
+
           objStyleFn = obj.$el.hasClass('no-transition') ? 'css' : styleFn;
           obj.$el[ objStyleFn ]( obj.style, animOpts );
         };
 
       } else if ( callback || onLayout || animOpts.complete ) {
-        // has callback
+
         var isCallbackTriggered = false,
-            // array of possible callbacks to trigger
+
             callbacks = [ callback, onLayout, animOpts.complete ],
             instance = this;
         triggerCallbackNow = true;
-        // trigger callback only once
         callbackFn = function() {
           if ( isCallbackTriggered ) {
             return;
@@ -677,32 +550,31 @@
         };
 
         if ( this.isUsingJQueryAnimation && styleFn === 'animate' ) {
-          // add callback to animation options
+          
           animOpts.complete = callbackFn;
           triggerCallbackNow = false;
 
         } else if ( Modernizr.csstransitions ) {
-          // detect if first item has transition
+
           var i = 0,
               firstItem = this.styleQueue[0],
               testElem = firstItem && firstItem.$el,
               styleObj;
-          // get first non-empty jQ object
+
           while ( !testElem || !testElem.length ) {
             styleObj = this.styleQueue[ i++ ];
-            // HACK: sometimes styleQueue[i] is undefined
+
             if ( !styleObj ) {
               return;
             }
             testElem = styleObj.$el;
           }
-          // get transition duration of the first element in that object
-          // yeah, this is inexact
+
           var duration = parseFloat( getComputedStyle( testElem[0] )[ transitionDurProp ] );
           if ( duration > 0 ) {
             processor = function( i, obj ) {
               obj.$el[ styleFn ]( obj.style, animOpts )
-                // trigger callback at transition end
+              
                 .one( transitionEndEvent, callbackFn );
             };
             triggerCallbackNow = false;
@@ -710,14 +582,13 @@
         }
       }
 
-      // process styleQueue
       $.each( this.styleQueue, processor );
 
       if ( triggerCallbackNow ) {
         callbackFn();
       }
 
-      // clear out queue for next time
+
       this.styleQueue = [];
     },
 
@@ -736,11 +607,7 @@
 
     },
 
-    // ====================== Convenience methods ======================
 
-    // ====================== Adding items ======================
-
-    // adds a jQuery object of items to a isotope container
     addItems : function( $content, callback ) {
       var $newAtoms = this._getAtoms( $content );
       // add new atoms to atoms pools
